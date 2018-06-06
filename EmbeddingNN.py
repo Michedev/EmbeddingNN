@@ -15,6 +15,7 @@ class EmbeddingNN:
         self.quantitative_layers = quantitative_layers
         self.batch_norm_first = batch_norm_first
         self.fithist = []
+        self._model: Model = None
 
     def _split_matrix(self, m, catcols, quacols):
         return {'Quant': m[:, quacols],
@@ -59,3 +60,12 @@ class EmbeddingNN:
         model.compile(loss=self.loss, optimizer=self.optimizer)
         hist = model.fit(X, y, **kwargs)
         self.fithist.append(hist)
+        self._catcols = catcols
+        self._quacols = quacols
+        self._model: Model = model
+        return hist
+
+    def predict(self, X, batch_size=None, verbose=0, steps=None):
+        assert hasattr(self, '_model') and self._model, 'Model not trained'
+        X = self._split_matrix(X, self._catcols, self._quacols)
+        return self._model.predict(X, batch_size, verbose, steps)

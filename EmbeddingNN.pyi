@@ -50,7 +50,11 @@ class EmbeddingNN:
     contains all the fit histories
     """
 
-    def fit(self, X: np.ndarray, y: np.array, catcols: List[int], quacols=None, batch_size=None, epochs=1, verbose=1, callbacks=None, validation_split=0., validation_data=None, shuffle=True, class_weight=None, sample_weight=None, initial_epoch=0, steps_per_epoch=None, validation_steps=None, **kwargs):
+    _model: keras.models.Model=None
+    _quacols: List[int] = None
+    _catcols: List[int] = None
+
+    def fit(self, X: np.ndarray, y: np.array, catcols: List[int], quacols=None, batch_size=None, epochs=1, verbose=1, callbacks=None, validation_split=0., validation_data=None, shuffle=True, class_weight=None, sample_weight=None, initial_epoch=0, steps_per_epoch=None, validation_steps=None, **kwargs) -> 'History':
         """
             X: Numpy array of training data (if the model has a single input),
                 or list of Numpy arrays (if the model has multiple inputs).
@@ -170,5 +174,22 @@ class EmbeddingNN:
         :param catcols: the index of the columns that contains the categorical variables
         :param quacols: the index of the columns that contains the quantitative variables
         :return: a dictionary that map each input layer name to the respective values
+        """
+        pass
+
+    def predict(self, X: np.ndarray, batch_size: int = None, verbose: int = None, steps: int = None) -> np.array:
+        """
+        Generates output predictions for the input samples.
+        Computation is done in batches.
+        # Arguments
+            x: The input data, as a Numpy array
+            (or list of Numpy arrays if the model has multiple outputs).
+            batch_size: Integer. If unspecified, it will default to 32. verbose: Verbosity mode, 0 or 1. steps: Total number of steps (batches of samples)
+             before declaring the prediction round finished. Ignored with the default value of None.
+        # Returns
+            Numpy array(s) of predictions.
+        # Raises
+            ValueError: In case of mismatch between the provided
+            input data and the model's expectations, or in case a stateful model receives a number of samples that is not a multiple of the batch size.
         """
         pass
