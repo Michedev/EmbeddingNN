@@ -1,19 +1,16 @@
 from keras import Input, Model
 from keras.layers import BatchNormalization, GaussianNoise, Flatten, Embedding, Concatenate
+import pandas as pd
 
 
 class EmbeddingNN:
 
     def __init__(self, quantitative_layers, concat_layers,
-                 loss, optimizer='adam', batch_norm_first=True,
-                 gausnoise_first=True, gausnoise_stdev=0.1):
+                 loss, optimizer='adam'):
         self.optimizer = optimizer
         self.loss = loss
-        self.gausnoise_first = gausnoise_first
-        self.gausnoise_stdev = gausnoise_stdev
         self.concat_layers = concat_layers
         self.quantitative_layers = quantitative_layers
-        self.batch_norm_first = batch_norm_first
         self.fithist = []
         self._model: Model = None
 
@@ -37,10 +34,6 @@ class EmbeddingNN:
         quant = quant_input
         for i in range(len(self.quantitative_layers)):
             quant = self.quantitative_layers[i](quant)
-            if i == 0 and self.batch_norm_first:
-                quant = BatchNormalization()(quant)
-            if i == 0 and self.gausnoise_first:
-                quant = GaussianNoise(self.gausnoise_stdev)(quant)
         return quant_input, quant
 
     def _concat_nn(self, qualayer, *embedlayers):
@@ -49,9 +42,8 @@ class EmbeddingNN:
             concat = self.concat_layers[i](concat)
         return concat
 
-    def fit(self, X, y, catcols, quacols=None, embed_size=5, **kwargs):
-        if not quacols:
-            quacols = [notcat for notcat in set(range(X.shape[1])) - set(catcols)]
+    def fit(self, X, y, catcols=None, quacols=None, embed_size=5, **kwargs):
+        X, y, catcols, quacols = self._arrange_input(X, y, catcols, quacols)
         categ_inputs, embeddings = zip(*list(self._embeds_nn(X, catcols, embed_size)))
         qua_input, qualayer = self._quant_nn(len(quacols))
         output_layer = self._concat_nn(qualayer, *embeddings)
@@ -64,6 +56,24 @@ class EmbeddingNN:
         self._quacols = quacols
         self._model: Model = model
         return hist
+
+    def _arrange_input(self, X, y, catcols, quacols):
+        assert not (catcols is None and quacols is None)
+        if isinstance(X, pd.DataFrame):
+            if isinstance(y, str):
+                y_label = y
+                y = X[y_label].values
+                X = X.drop(columns=y_label)
+            if isinstance(catcols, list) and isinstance(catcols[0], str):
+                catcols = [i for i, col in X.columns for catcol in catcols if col == catcol]
+            if isinstance(quacols, list) and isinstance(quacols[0], str):
+                quacols = [i for i, col in X.columns for quacol in quacols if col == quacol]
+            X = X.get_values()
+        if catcols is None:
+            catcols = [i for i in (set(range(X.shape[1])) - set(quacols))]
+        if quacols is None:
+            quacols = [i for i in (set(range(X.shape[1])) - set(catcols))]
+        return X, y, catcols, quacols
 
     def predict(self, X, batch_size=None, verbose=0, steps=None):
         assert hasattr(self, '_model') and self._model, 'Model not trained'

@@ -33,17 +33,6 @@ class EmbeddingNN:
     The list of layers having in input the embedded vectors and
     the quantitative variables
     """
-    gausnoise_first: bool=None
-    """
-    :type: boolean
-    If true add gaussian noise at the first level
-    """
-    gausnoise_stdev: float=None
-    """
-    The standard devation of the gaussian noise.
-    It has effect only if gausnoise_first is True
-    """
-
     fithist=None
     """
     :type List of keras History object
@@ -192,4 +181,7 @@ class EmbeddingNN:
             ValueError: In case of mismatch between the provided
             input data and the model's expectations, or in case a stateful model receives a number of samples that is not a multiple of the batch size.
         """
+        pass
+
+    def _arrange_input(self, X, y, catcols, quacols):
         pass
